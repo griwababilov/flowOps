@@ -10,11 +10,10 @@
 *.pyd
 *.so
 
-# Virtual environments
+# Python virtual environments
+services/*/*-venv/
+services/**/auth-venv/
 
-venv/
-.env/
-.venv/
 
 # Environment variables
 
