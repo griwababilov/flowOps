@@ -35,7 +35,8 @@ def validate(current_user = Depends(get_current_user)):
         "user_id": current_user.id,
         "email": current_user.email,
         "is_active": current_user.is_active,
-        "is_superuser": current_user.is_superuser,
+        "role": current_user.role,
+        #"is_superuser": current_user.is_superuser,
     }
 
 

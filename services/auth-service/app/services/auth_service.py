@@ -34,6 +34,7 @@ class AuthService:
             email=email,
             username=username,
             hashed_password = hash_password(password),
+            role="user",
             )
     
     @staticmethod

@@ -17,7 +17,7 @@ class UserOut(BaseModel):
     email: EmailStr
     username: str
     is_active: bool
-    is_superuser: bool
+    # is_superuser: bool
 
     class Config:
         from_attributes = True
