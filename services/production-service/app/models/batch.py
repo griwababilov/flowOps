@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, Float, DateTime, func, Enum as SqlEnum
+from sqlalchemy import CheckConstraint, Integer, String, Float, DateTime, func, Enum as SqlEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from datetime import datetime
@@ -10,6 +10,21 @@ from app.core.enums import BatchStatus
 
 class Batch(Base):
     __tablename__ = "batches"
+
+    __table_args__ = (
+    CheckConstraint("planned_quantity > 0", name="check_planned_quantity_positive"),
+    CheckConstraint("produced_quantity >= 0", name="check_produced_quantity_non_negative"),
+    CheckConstraint("accepted_quantity >= 0", name="check_accepted_quantity_non_negative"),
+    CheckConstraint("defect_quantity >= 0", name="check_defect_quantity_non_negative"),
+    CheckConstraint(
+        "accepted_quantity + defect_quantity <= produced_quantity",
+        name="check_total_quality_counts_valid"
+    ),
+    CheckConstraint(
+        "produced_quantity <= planned_quantity",
+        name="check_produced_not_exceed_planned"
+    ),
+)
 
     id: Mapped[int] = mapped_column(
         Integer, primary_key=True, 
