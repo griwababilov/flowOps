@@ -1,4 +1,3 @@
 from app.models.batch import Batch
 
-
-__all__ = ['Batch']
+__all__ = ["Batch"]

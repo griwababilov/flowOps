@@ -3,14 +3,12 @@ def make_batch_payload(batch_number="Batch-test"):
         "batch_number": batch_number,
         "product_name": "Name-test",
         "planned_quantity": 50000,
-
         "length_target": 1,
         "width_target": 1,
         "height_target": 1,
-
         "length_tolerance": 0,
         "width_tolerance": 0,
-        "height_tolerance": 0
+        "height_tolerance": 0,
     }
 
 

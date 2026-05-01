@@ -4,6 +4,7 @@ from datetime import datetime
 
 from app.core.enums import BatchStatus
 
+
 class BatchCreate(BaseModel):
     batch_number: str
     product_name: str
@@ -12,7 +13,7 @@ class BatchCreate(BaseModel):
     length_target: float = Field(gt=0)
     width_target: float = Field(gt=0)
     height_target: float = Field(gt=0)
-    
+
     length_tolerance: float = Field(ge=0)
     width_tolerance: float = Field(ge=0)
     height_tolerance: float = Field(ge=0)
