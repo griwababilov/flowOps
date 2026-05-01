@@ -12,9 +12,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-  env:
+
+    env:
       DATABASE_URL: sqlite:///./test.db
-  defaults:
+
+    defaults:
       run:
         working-directory: services/production-service
 
@@ -34,5 +36,4 @@ jobs:
           pip install pytest httpx
 
       - name: Run tests
-        run: |
-          pytest -v
+        run: pytest -v
