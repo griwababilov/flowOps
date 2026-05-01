@@ -16,7 +16,7 @@ from app.utils.dependencies import get_db
 from app.utils.dependencies import get_db, get_current_user
 
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/register", response_model=UserOut)
