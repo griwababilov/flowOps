@@ -19,16 +19,18 @@ class BatchRepository:
 
     @staticmethod
     def get_all(db: Session, limmit=100, offset=0) -> list[Batch]:
-        return (db.query(Batch)
-                .order_by(Batch.created_at.desc())
-                .offset(offset)
-                .limit(limmit)
-                .all())
+        return (
+            db.query(Batch)
+            .order_by(Batch.created_at.desc())
+            .offset(offset)
+            .limit(limmit)
+            .all()
+        )
 
     @staticmethod
     def get_by_id(db: Session, batch_id: int) -> Batch | None:
         return db.query(Batch).filter(Batch.id == batch_id).first()
-    
+
     @staticmethod
     def update(db: Session, batch: Batch, **kwargs) -> Batch:
         try:
@@ -43,7 +45,7 @@ class BatchRepository:
         except Exception:
             db.rollback()
             raise
-    
+
     @staticmethod
     def delete(db: Session, batch: Batch):
         try:
