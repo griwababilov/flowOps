@@ -11,7 +11,7 @@ class PartCreate(BaseModel):
     length_actual: float = Field(gt=0)
     width_actual: float = Field(gt=0)
     height_actual: float = Field(gt=0)
-    
+
 
 class PartPatch(BaseModel):
     batch_id: int | None = Field(default=None, ge=0)
