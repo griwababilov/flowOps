@@ -12,8 +12,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    defaults:
+  env:
+      DATABASE_URL: sqlite:///./test.db
+  defaults:
       run:
         working-directory: services/production-service
 
