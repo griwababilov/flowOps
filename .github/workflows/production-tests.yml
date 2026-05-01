@@ -1,0 +1,41 @@
+name: Production Service Tests
+
+on:
+  push:
+    branches:
+      - main
+      - production-branch
+  pull_request:
+    branches:
+      - main
+  merge:
+    brances:
+      - main
+      - production-branch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: services/production-service
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest httpx
+
+      - name: Run tests
+        run: |
+          pytest -v
