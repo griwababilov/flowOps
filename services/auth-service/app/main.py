@@ -8,7 +8,6 @@ app = FastAPI(title="Auth Service")
 
 app.include_router(auth_router)
 
-
 @app.get("/health")
 def health():
     return {"status": "ok"}

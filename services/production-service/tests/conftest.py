@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from app.main import app
 from app.db.base import Base
 from app.db.session import get_db
-from app.models.batch import Batch
+from app.models.batch import Batch  # noqa: F401
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 
