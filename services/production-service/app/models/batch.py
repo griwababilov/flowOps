@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from sqlalchemy import (
     CheckConstraint,
     Integer,
@@ -7,12 +9,16 @@ from sqlalchemy import (
     func,
     Enum as SqlEnum,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from app.db.base import Base
 from app.core.enums import BatchStatus
+from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.models.part import Part
 
 
 class Batch(Base):
@@ -73,4 +79,10 @@ class Batch(Base):
     completed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
+    )
+
+    parts: Mapped[list["Part"]] = relationship(
+        "Part",
+        back_populates="batch",
+        cascade="all, delete-orphan",
     )

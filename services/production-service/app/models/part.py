@@ -1,4 +1,6 @@
-from sqlalchemy.orm import Mapped, mapped_column
+from __future__ import annotations
+
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import (
     CheckConstraint,
     ForeignKey,
@@ -11,9 +13,13 @@ from sqlalchemy import (
 )
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from app.db.base import Base
 from app.core.enums import DefectReason
+
+if TYPE_CHECKING:
+    from app.models.batch import Batch
 
 
 class Part(Base):
@@ -53,4 +59,9 @@ class Part(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
+    )
+
+    batch: Mapped["Batch"] = relationship(
+        "Batch",
+        back_populates="parts",
     )
