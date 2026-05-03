@@ -27,6 +27,10 @@ class PartRepository:
         return db.query(Part).filter(Part.id == part_id).first()
 
     @staticmethod
+    def get_by_batch_id(db: Session, batch_id) -> list[Part]:
+        return db.query(Part).filter(Part.batch_id == batch_id).all()
+
+    @staticmethod
     def update(db: Session, part: Part, **kwargs) -> Part:
         try:
             for key, value in kwargs.items():

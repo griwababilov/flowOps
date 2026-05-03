@@ -2,6 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.repositories.part_repository import PartRepository
+from app.repositories.batch_repository import BatchRepository
 from app.schemas.part import PartCreate, PartUpdate, PartResponse
 
 
@@ -28,6 +29,19 @@ class PartService:
             )
 
         return PartResponse.model_validate(part)
+
+    @staticmethod
+    def get_parts_in_batch(db: Session, batch_id: int) -> list[PartResponse]:
+        batch = BatchRepository.get_by_id(db, batch_id)
+
+        if not batch:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Batch not found"
+            )
+
+        parts = PartRepository.get_by_batch_id(db, batch_id)
+
+        return list(map(PartResponse.model_validate, parts))
 
     @staticmethod
     def patch_part(db: Session, part_id: int, part_data: PartUpdate) -> PartResponse:
