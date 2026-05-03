@@ -2,7 +2,6 @@ from sqlalchemy.orm import Session
 
 from app.models.batch import Batch
 
-
 class BatchRepository:
 
     @staticmethod
