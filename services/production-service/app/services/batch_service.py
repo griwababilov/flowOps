@@ -2,7 +2,6 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.repositories.batch_repository import BatchRepository
-from app.models.batch import Batch
 from app.schemas.batch import BatchCreate, BatchResponse, BatchUpdate
 from app.core.enums import BatchStatus
 
@@ -12,18 +11,18 @@ from datetime import datetime, timezone
 class BatchService:
 
     @staticmethod
-    def create_batch(db: Session, batch_data: BatchCreate) -> Batch:
+    def create_batch(db: Session, batch_data: BatchCreate) -> BatchResponse:
         batch = BatchRepository.create(db=db, **batch_data.model_dump())
 
         return BatchResponse.model_validate(batch)
 
     @staticmethod
-    def get_batches(db: Session) -> list[Batch]:
+    def get_batches(db: Session) -> list[BatchResponse]:
         batches = BatchRepository.get_all(db)
         return list(map(BatchResponse.model_validate, batches))
 
     @staticmethod
-    def get_batch_by_id(db: Session, batch_id: int) -> Batch | None:
+    def get_batch_by_id(db: Session, batch_id: int) -> BatchResponse | None:
         batch = BatchRepository.get_by_id(db, batch_id)
         if not batch:
             raise HTTPException(
@@ -97,7 +96,7 @@ class BatchService:
         return BatchResponse.model_validate(comleted_batch)
 
     @staticmethod
-    def cancelled(db: Session, batch_id: int):
+    def cancelled(db: Session, batch_id: int) -> BatchResponse:
         batch = BatchRepository.get_by_id(db, batch_id)
 
         if not batch:
