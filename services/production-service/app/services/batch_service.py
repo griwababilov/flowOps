@@ -119,7 +119,7 @@ class BatchService:
         return BatchResponse.model_validate(comleted_batch)
 
     @staticmethod
-    def delete(db: Session, batch_id: int) -> bool:
+    def delete(db: Session, batch_id: int) -> dict:
         deleted = BatchRepository.delete_by_id(db, batch_id)
 
         if not deleted:
