@@ -49,8 +49,9 @@ class BatchRepository:
     @staticmethod
     def delete(db: Session, batch: Batch):
         try:
-            db.delete(batch)
+            deleted_rows = db.delete(batch)
             db.commit()
+            return deleted_rows > 0
         except Exception:
             db.rollback()
             raise
