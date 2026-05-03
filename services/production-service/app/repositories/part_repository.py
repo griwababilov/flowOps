@@ -31,6 +31,10 @@ class PartRepository:
         return db.query(Part).filter(Part.batch_id == batch_id).all()
 
     @staticmethod
+    def get_defective_parts_in_batch(db: Session, batch_id: int) -> list[Part]:
+        return db.query(Part).filter(Part.batch_id == batch_id, Part.is_defective).all()
+
+    @staticmethod
     def update(db: Session, part: Part, **kwargs) -> Part:
         try:
             for key, value in kwargs.items():

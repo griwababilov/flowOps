@@ -44,6 +44,19 @@ class PartService:
         return list(map(PartResponse.model_validate, parts))
 
     @staticmethod
+    def get_defective_parts_in_batch(db: Session, batch_id: int) -> list[PartResponse]:
+        batch = BatchRepository.get_by_id(db, batch_id)
+
+        if not batch:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Batch not found"
+            )
+
+        defective_parts = PartRepository.get_defective_parts_in_batch(db, batch_id)
+
+        return list(map(PartResponse.model_validate, defective_parts))
+
+    @staticmethod
     def patch_part(db: Session, part_id: int, part_data: PartUpdate) -> PartResponse:
         part = PartRepository.get_by_id(db, part_id)
 
