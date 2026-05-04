@@ -99,11 +99,31 @@ class PartService:
 
     @staticmethod
     def delete_part(db: Session, part_id: int) -> dict:
-        deleted = PartRepository.delete_by_id(db, part_id)
+        part = PartRepository.get_by_id(db, part_id)
 
-        if not deleted:
+        if not part:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Part not found"
             )
 
-        return {"message": "Part deleted successfully"}
+        batch = BatchRepository.get_by_id(db, part.batch_id)
+
+        if not batch:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Batch not found"
+            )
+
+        batch.produced_quantity = max(batch.produced_quantity - 1, 0)
+
+        if part.is_defective:
+            batch.defect_quantity = max(batch.defect_quantity - 1, 0)
+        else:
+            batch.accepted_quantity = max(batch.accepted_quantity - 1, 0)
+
+        try:
+            PartRepository.delete(db, part)
+            db.commit()
+            return {"message": "Part deleted successfully"}
+        except Exception:
+            db.rollback()
+            raise

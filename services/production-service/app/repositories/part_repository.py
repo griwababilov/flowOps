@@ -64,3 +64,7 @@ class PartRepository:
         except Exception:
             db.rollback()
             raise
+
+    @staticmethod
+    def delete(db: Session, part: Part) -> None:
+        db.delete(part)
