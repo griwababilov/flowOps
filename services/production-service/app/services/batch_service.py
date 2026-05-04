@@ -2,7 +2,12 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.repositories.batch_repository import BatchRepository
-from app.schemas.batch import BatchCreate, BatchResponse, BatchUpdate, BatchStatsResponse
+from app.schemas.batch import (
+    BatchCreate,
+    BatchResponse,
+    BatchUpdate,
+    BatchStatsResponse,
+)
 from app.core.enums import BatchStatus
 
 from datetime import datetime, timezone
@@ -30,25 +35,26 @@ class BatchService:
             )
 
         return BatchResponse.model_validate(batch)
-    
+
     @staticmethod
     def get_stats(db: Session, batch_id: int) -> BatchStatsResponse:
         batch = BatchRepository.get_by_id(db, batch_id)
 
         if not batch:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Batch not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Batch not found"
             )
 
         completion_rate = (
             batch.produced_quantity / batch.planned_quantity * 100
-            if batch.planned_quantity > 0 else 0
+            if batch.planned_quantity > 0
+            else 0
         )
 
         defect_rate = (
             batch.defect_quantity / batch.produced_quantity * 100
-            if batch.produced_quantity > 0 else 0
+            if batch.produced_quantity > 0
+            else 0
         )
 
         return BatchStatsResponse(

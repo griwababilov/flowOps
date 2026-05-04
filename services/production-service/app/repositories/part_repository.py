@@ -19,6 +19,12 @@ class PartRepository:
             raise
 
     @staticmethod
+    def create_without_commit(db: Session, **kwargs) -> Part:
+        part = Part(**kwargs)
+        db.add(part)
+        return part
+
+    @staticmethod
     def get_all(db: Session) -> list[Part]:
         return db.query(Part).all()
 

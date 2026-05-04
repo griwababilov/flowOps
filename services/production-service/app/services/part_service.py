@@ -10,9 +10,35 @@ class PartService:
 
     @staticmethod
     def create_part(db: Session, part_data: PartCreate) -> PartResponse:
-        part = PartRepository.create(db, **part_data.model_dump())
+        batch = BatchRepository.get_by_id(db, part_data.batch_id)
 
-        return PartResponse.model_validate(part)
+        if not batch:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Batch not found"
+            )
+
+        if batch.produced_quantity >= batch.planned_quantity:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Batch is already full"
+            )
+
+        part = PartRepository.create_without_commit(db=db, **part_data.model_dump())
+
+        batch.produced_quantity += 1
+
+        if part_data.is_defective:
+            batch.defect_quantity += 1
+        else:
+            batch.accepted_quantity += 1
+
+        try:
+            db.commit()
+            db.refresh(part)
+            db.refresh(batch)
+            return PartResponse.model_validate(part)
+        except Exception:
+            db.rollback()
+            raise
 
     @staticmethod
     def get_parts(db: Session) -> list[PartResponse]:
@@ -67,7 +93,7 @@ class PartService:
 
         update_data = part_data.model_dump(exclude_unset=True)
 
-        update_part = PartRepository.update(db, part, update_data)
+        update_part = PartRepository.update(db, part, **update_data)
 
         return PartResponse.model_validate(update_part)
 
