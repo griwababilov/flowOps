@@ -91,7 +91,7 @@ class PartService:
         defective_parts = PartRepository.get_defective_parts_in_batch(db, batch_id)
 
         return list(map(PartResponse.model_validate, defective_parts))
-    
+
     @staticmethod
     def _dimensions_changed(update_data: dict) -> bool:
         return any(
@@ -99,25 +99,18 @@ class PartService:
             for field in ("length_actual", "width_actual", "height_actual")
         )
 
-
     @staticmethod
     def _manual_status_changed(update_data: dict) -> bool:
-        return (
-            "is_defective" in update_data
-            or "defect_reason" in update_data
-        )
-
+        return "is_defective" in update_data or "defect_reason" in update_data
 
     @staticmethod
     def _validate_manual_defect_logic(
-        is_defective: bool,
-        defect_reason: DefectReason | None,
-        update_data: dict
+        is_defective: bool, defect_reason: DefectReason | None, update_data: dict
     ) -> None:
         if is_defective is True and defect_reason is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="defect_reason is required when is_defective is True"
+                detail="defect_reason is required when is_defective is True",
             )
 
         if is_defective is False:
@@ -129,16 +122,14 @@ class PartService:
 
         if not part:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Part not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Part not found"
             )
 
         batch = BatchRepository.get_by_id(db, part.batch_id)
 
         if not batch:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Batch not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Batch not found"
             )
 
         old_is_defective = part.is_defective
@@ -156,8 +147,7 @@ class PartService:
             )
 
             is_defective, defect_reason = PartService.calculate_defect_status(
-                batch,
-                target_part_data
+                batch, target_part_data
             )
 
             update_data["is_defective"] = is_defective
@@ -168,9 +158,7 @@ class PartService:
             target_defect_reason = update_data.get("defect_reason", part.defect_reason)
 
             PartService._validate_manual_defect_logic(
-                target_is_defective,
-                target_defect_reason,
-                update_data
+                target_is_defective, target_defect_reason, update_data
             )
 
         try:
