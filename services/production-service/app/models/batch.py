@@ -20,6 +20,7 @@ from app.db.base import Base
 if TYPE_CHECKING:
     from app.models.part import Part
 
+
 class Batch(Base):
     __tablename__ = "batches"
 
