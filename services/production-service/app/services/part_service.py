@@ -83,7 +83,7 @@ class PartService:
         return list(map(PartResponse.model_validate, defective_parts))
 
     @staticmethod
-    def patch_part(db: Session, part_id: int, part_data: PartUpdate) -> PartResponse:
+    def update_part(db: Session, part_id: int, part_data: PartUpdate) -> PartResponse:
         part = PartRepository.get_by_id(db, part_id)
 
         if not part:
