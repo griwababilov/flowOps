@@ -8,19 +8,6 @@ class PartRepository:
     @staticmethod
     def create(db: Session, **kwargs) -> Part:
         part = Part(**kwargs)
-
-        try:
-            db.add(part)
-            db.commit()
-            db.refresh(part)
-            return part
-        except Exception:
-            db.rollback()
-            raise
-
-    @staticmethod
-    def create_without_commit(db: Session, **kwargs) -> Part:
-        part = Part(**kwargs)
         db.add(part)
         return part
 
@@ -33,7 +20,7 @@ class PartRepository:
         return db.query(Part).filter(Part.id == part_id).first()
 
     @staticmethod
-    def get_by_batch_id(db: Session, batch_id) -> list[Part]:
+    def get_by_batch_id(db: Session, batch_id: int) -> list[Part]:
         return db.query(Part).filter(Part.batch_id == batch_id).all()
 
     @staticmethod
@@ -41,29 +28,11 @@ class PartRepository:
         return db.query(Part).filter(Part.batch_id == batch_id, Part.is_defective).all()
 
     @staticmethod
-    def update(db: Session, part: Part, **kwargs) -> Part:
-        try:
-            for key, value in kwargs.items():
-                setattr(part, key, value)
+    def update(part: Part, **kwargs) -> Part:
+        for key, value in kwargs.items():
+            setattr(part, key, value)
 
-            db.commit()
-            db.refresh(part)
-
-            return part
-
-        except Exception:
-            db.rollback()
-            raise
-
-    @staticmethod
-    def delete_by_id(db: Session, part_id: int) -> bool:
-        try:
-            deleted_rows = db.query(Part).filter(Part.id == part_id).delete()
-            db.commit()
-            return deleted_rows > 0
-        except Exception:
-            db.rollback()
-            raise
+        return part
 
     @staticmethod
     def delete(db: Session, part: Part) -> None:

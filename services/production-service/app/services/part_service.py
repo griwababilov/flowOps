@@ -22,7 +22,7 @@ class PartService:
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Batch is already full"
             )
 
-        part = PartRepository.create_without_commit(db=db, **part_data.model_dump())
+        part = PartRepository.create(db=db, **part_data.model_dump())
 
         batch.produced_quantity += 1
 
@@ -91,11 +91,52 @@ class PartService:
                 status_code=status.HTTP_404_NOT_FOUND, detail="Part not found"
             )
 
+        batch = BatchRepository.get_by_id(db, part.batch_id)
+
+        if not batch:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Batch not found"
+            )
+
+        old_is_defective = part.is_defective
+
         update_data = part_data.model_dump(exclude_unset=True)
 
-        update_part = PartRepository.update(db, part, **update_data)
+        target_is_defective = update_data.get("is_defective", part.is_defective)
+        target_defect_reason = update_data.get("defect_reason", part.defect_reason)
 
-        return PartResponse.model_validate(update_part)
+        if target_is_defective is True and target_defect_reason is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="defect_reason is required when is_defective is True",
+            )
+
+        if target_is_defective is False:
+            update_data["defect_reason"] = None
+
+        try:
+            updated_part = PartRepository.update(part, **update_data)
+
+            if (
+                "is_defective" in update_data
+                and old_is_defective != updated_part.is_defective
+            ):
+                if updated_part.is_defective:
+                    batch.defect_quantity += 1
+                    batch.accepted_quantity = max(batch.accepted_quantity - 1, 0)
+                else:
+                    batch.accepted_quantity += 1
+                    batch.defect_quantity = max(batch.defect_quantity - 1, 0)
+
+            db.commit()
+            db.refresh(updated_part)
+            db.refresh(batch)
+
+            return PartResponse.model_validate(updated_part)
+
+        except Exception:
+            db.rollback()
+            raise
 
     @staticmethod
     def delete_part(db: Session, part_id: int) -> dict:

@@ -18,8 +18,13 @@ class BatchService:
     @staticmethod
     def create_batch(db: Session, batch_data: BatchCreate) -> BatchResponse:
         batch = BatchRepository.create(db=db, **batch_data.model_dump())
-
-        return BatchResponse.model_validate(batch)
+        try:
+            db.commit()
+            db.refresh(batch)
+            return BatchResponse.model_validate(batch)
+        except Exception:
+            db.rollback()
+            raise
 
     @staticmethod
     def get_batches(db: Session) -> list[BatchResponse]:
@@ -68,7 +73,7 @@ class BatchService:
         )
 
     @staticmethod
-    def patch_batch(
+    def update_batch(
         db: Session, batch_id: int, batch_data: BatchUpdate
     ) -> BatchResponse:
         batch = BatchRepository.get_by_id(db, batch_id)
@@ -80,12 +85,26 @@ class BatchService:
 
         update_data = batch_data.model_dump(exclude_unset=True)
 
-        updated_batch = BatchRepository.update(db=db, batch=batch, **update_data)
+        if "planned_quantity" in update_data:
+            if update_data["planned_quantity"] < batch.produced_quantity:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="planned_quantity cannot be less than produced_quantity",
+                )
 
-        return BatchResponse.model_validate(updated_batch)
+        try:
+            updated_batch = BatchRepository.update(batch=batch, **update_data)
+            db.commit()
+            db.refresh(updated_batch)
+
+            return BatchResponse.model_validate(updated_batch)
+
+        except Exception:
+            db.rollback()
+            raise
 
     @staticmethod
-    def in_progress(db: Session, batch_id) -> BatchRepository:
+    def in_progress(db: Session, batch_id: int) -> BatchResponse:
         batch = BatchRepository.get_by_id(db, batch_id)
 
         if not batch:
@@ -99,16 +118,23 @@ class BatchService:
                 detail="Only created batches can be in_progress",
             )
 
-        comleted_batch = BatchRepository.update(
-            db,
-            batch,
-            status=BatchStatus.in_progress,
-        )
+        try:
+            in_progress_batch = BatchRepository.update(
+                batch,
+                status=BatchStatus.in_progress,
+            )
 
-        return BatchResponse.model_validate(comleted_batch)
+            db.commit()
+            db.refresh(in_progress_batch)
+
+            return BatchResponse.model_validate(in_progress_batch)
+
+        except Exception:
+            db.rollback()
+            raise
 
     @staticmethod
-    def compelete(db: Session, batch_id) -> BatchResponse:
+    def complete(db: Session, batch_id: int) -> BatchResponse:
         batch = BatchRepository.get_by_id(db, batch_id)
 
         if not batch:
@@ -122,17 +148,24 @@ class BatchService:
                 detail="Only in_progress batches can be completed",
             )
 
-        comleted_batch = BatchRepository.update(
-            db,
-            batch,
-            status=BatchStatus.completed,
-            completed_at=datetime.now(timezone.utc),
-        )
+        try:
+            completed_batch = BatchRepository.update(
+                batch,
+                status=BatchStatus.completed,
+                completed_at=datetime.now(timezone.utc),
+            )
 
-        return BatchResponse.model_validate(comleted_batch)
+            db.commit()
+            db.refresh(completed_batch)
+
+            return BatchResponse.model_validate(completed_batch)
+
+        except Exception:
+            db.rollback()
+            raise
 
     @staticmethod
-    def cancelled(db: Session, batch_id: int) -> BatchResponse:
+    def cancel(db: Session, batch_id: int) -> BatchResponse:
         batch = BatchRepository.get_by_id(db, batch_id)
 
         if not batch:
@@ -146,21 +179,34 @@ class BatchService:
                 detail="Completed batches can't be cancelled",
             )
 
-        comleted_batch = BatchRepository.update(
-            db,
-            batch,
-            status=BatchStatus.cancelled,
-        )
+        try:
+            cancelled_batch = BatchRepository.update(
+                batch,
+                status=BatchStatus.cancelled,
+            )
 
-        return BatchResponse.model_validate(comleted_batch)
+            db.commit()
+            db.refresh(cancelled_batch)
+
+            return BatchResponse.model_validate(cancelled_batch)
+
+        except Exception:
+            db.rollback()
+            raise
 
     @staticmethod
-    def delete(db: Session, batch_id: int) -> dict:
-        deleted = BatchRepository.delete_by_id(db, batch_id)
+    def delete_batch(db: Session, batch_id: int) -> dict:
+        batch = BatchRepository.get_by_id(db, batch_id)
 
-        if not deleted:
+        if not batch:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Batch not found"
             )
 
-        return {"message": "Batch deleted successfully"}
+        try:
+            BatchRepository.delete(db, batch)
+            db.commit()
+            return {"message": "Batch deleted successfully"}
+        except Exception:
+            db.rollback()
+            raise
