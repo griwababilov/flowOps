@@ -43,6 +43,3 @@ def cancelled_batch(batch_id: int, db = Depends(get_db)):
 @router.delete("/batches/{batch_id}")
 def delete_batch(batch_id: int, db=Depends(get_db)):
     return BatchService.delete_batch(db, batch_id)
-
-def delete_batch(batch_id: int, db=Depends(get_db)):
-    return BatchService.delete(db, batch_id)
