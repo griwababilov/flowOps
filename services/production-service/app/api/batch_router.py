@@ -22,8 +22,8 @@ def get_batch(batch_id: int, db=Depends(get_db)):
 
 
 @router.patch("/batches/{batch_id}", response_model=BatchResponse)
-def patch_batch(batch_id: int, batch_data: BatchUpdate, db=Depends(get_db)):
-    return BatchService.patch_batch(db, batch_id, batch_data)
+def update_batch(batch_id: int, batch_data: BatchUpdate, db=Depends(get_db)):
+    return BatchService.update_batch(db, batch_id, batch_data)
 
 
 @router.post("/batches/{batch_id}/in-progress", response_model=BatchResponse)
@@ -33,12 +33,12 @@ def in_progress_batch(batch_id: int, db=Depends(get_db)):
 
 @router.post("/batches/{batch_id}/complete", response_model=BatchResponse)
 def complete_batch(batch_id: int, db=Depends(get_db)):
-    return BatchService.compelete(db, batch_id)
+    return BatchService.complete(db, batch_id)
 
 
-@router.post("/batches/{batch_id}/cancelled", response_model=BatchResponse)
+@router.post("/batches/{batch_id}/cancel", response_model=BatchResponse)
 def cancelled_batch(batch_id: int, db=Depends(get_db)):
-    return BatchService.compelete(db, batch_id)
+    return BatchService.cancel(db, batch_id)
 
 
 @router.delete("/batches/{batch_id}")
