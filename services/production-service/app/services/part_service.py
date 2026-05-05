@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from app.repositories.part_repository import PartRepository
 from app.repositories.batch_repository import BatchRepository
 from app.schemas.part import PartCreate, PartUpdate, PartResponse
+from app.schemas.batch import BatchPartParametrs
+from app.core.enums import DefectReason
 
 
 class PartService:
@@ -17,16 +19,24 @@ class PartService:
                 status_code=status.HTTP_404_NOT_FOUND, detail="Batch not found"
             )
 
-        if batch.produced_quantity >= batch.planned_quantity:
+        if batch.accepted_quantity >= batch.planned_quantity:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Batch is already full"
             )
 
-        part = PartRepository.create(db=db, **part_data.model_dump())
+        is_defective, defect_reason = PartService.calculate_defect_status(
+            batch, part_data
+        )
+        part = PartRepository.create(
+            db=db,
+            **part_data.model_dump(),
+            is_defective=is_defective,
+            defect_reason=defect_reason
+        )
 
         batch.produced_quantity += 1
 
-        if part_data.is_defective:
+        if is_defective:
             batch.defect_quantity += 1
         else:
             batch.accepted_quantity += 1
@@ -168,3 +178,28 @@ class PartService:
         except Exception:
             db.rollback()
             raise
+
+    @staticmethod
+    def calculate_defect_status(
+        batch: BatchPartParametrs, part_data: PartCreate | PartUpdate
+    ) -> tuple[bool, DefectReason | None]:
+
+        min_length = batch.length_target - batch.length_tolerance
+        max_length = batch.length_target + batch.length_tolerance
+
+        min_width = batch.width_target - batch.width_tolerance
+        max_width = batch.width_target + batch.width_tolerance
+
+        min_height = batch.height_target - batch.height_tolerance
+        max_height = batch.height_target + batch.height_tolerance
+
+        if part_data.length_actual < min_length or part_data.length_actual > max_length:
+            return (True, DefectReason.LENGTH_EXCEEDS_TOLERANCE)
+
+        if part_data.width_actual < min_width or part_data.width_actual > max_width:
+            return (True, DefectReason.WIDTH_EXCEEDS_TOLERANCE)
+
+        if part_data.height_actual < min_height or part_data.height_actual > max_height:
+            return (True, DefectReason.HEIGHT_EXCEEDS_TOLERANCE)
+
+        return (False, None)

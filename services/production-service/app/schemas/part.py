@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 from datetime import datetime
 
@@ -11,19 +11,6 @@ class PartCreate(BaseModel):
     length_actual: float = Field(gt=0)
     width_actual: float = Field(gt=0)
     height_actual: float = Field(gt=0)
-
-    is_defective: bool = False
-    defect_reason: DefectReason | None = None
-
-    @model_validator(mode="after")
-    def validate_defect_logic(self):
-        if self.is_defective and self.defect_reason is None:
-            raise ValueError("defect_reason is required when is_defective is True")
-
-        if not self.is_defective and self.defect_reason is not None:
-            raise ValueError("defect_reason must be null when is_defective is False")
-
-        return self
 
 
 class PartUpdate(BaseModel):
