@@ -23,8 +23,23 @@ class BatchResponse(BaseModel):
     id: int
     batch_number: str
     product_name: str
+
     planned_quantity: int
+    produced_quantity: int
+
+    accepted_quantity: int
+    defect_quantity: int
+
     status: BatchStatus
+
+    length_target: float
+    width_target: float
+    height_target: float
+
+    length_tolerance: float
+    width_tolerance: float
+    height_tolerance: float
+
     created_at: datetime
     completed_at: datetime | None
 
@@ -42,3 +57,23 @@ class BatchUpdate(BaseModel):
     length_tolerance: float | None = Field(default=None, ge=0)
     width_tolerance: float | None = Field(default=None, ge=0)
     height_tolerance: float | None = Field(default=None, ge=0)
+
+
+class BatchStatsResponse(BaseModel):
+    batch_id: int
+    planned_quantity: int = Field(gt=0)
+    produced_quantity: int = Field(ge=0)
+    good_quantity: int = Field(ge=0)
+    defective_quantity: int = Field(ge=0)
+    completion_rate: float = Field(ge=0)
+    defect_rate: float = Field(ge=0)
+
+
+class BatchPartParametrs(BaseModel):
+    length_target: float = Field(gt=0)
+    width_target: float = Field(gt=0)
+    height_target: float = Field(gt=0)
+
+    length_tolerance: float = Field(gt=0)
+    width_tolerance: float = Field(gt=0)
+    height_tolerance: float = Field(gt=0)
