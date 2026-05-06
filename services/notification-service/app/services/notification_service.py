@@ -28,9 +28,7 @@ class NotificationService:
             raise
 
     @staticmethod
-    def get_notification(
-        db: Session, notification_id: int
-    ) -> NotificationResponse:
+    def get_notification(db: Session, notification_id: int) -> NotificationResponse:
         notification = NotificationRepository.get_by_id(
             db=db, notification_id=notification_id
         )
@@ -48,7 +46,9 @@ class NotificationService:
         return list(map(NotificationResponse.model_validate, notifications))
 
     @staticmethod
-    def mark_notification_as_read(db: Session, notification_id: int) -> NotificationResponse:
+    def mark_notification_as_read(
+        db: Session, notification_id: int
+    ) -> NotificationResponse:
         notification = NotificationRepository.get_by_id(
             db=db, notification_id=notification_id
         )
