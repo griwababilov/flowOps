@@ -2,18 +2,18 @@ from enum import Enum
 
 
 class NotificationSeverity(str, Enum):
-    INFO = "INFO"
-    WARNING = "WARNING"
-    CRITICAL = "CRITICAL"
+    INFO = "info"
+    WARNING = "warning"
+    CRITICAL = "critical"
 
 
 class NotificationEventType(str, Enum):
-    PART_CREATED = "PART_CREATED"
-    PART_UPDATED = "PART_UPDATED"
-    PART_DELETED = "PART_DELETED"
-    PART_DEFECTIVE_DETECTED = "PART_DEFECTIVE_DETECTED"
+    PART_CREATED = "part.created"
+    PART_UPDATED = "part.updated"
+    PART_DELETED = "part.deleted"
+    PART_DEFECTIVE_DETECTED = "part.defective_detected"
 
-    BATCH_CREATED = "BATCH_CREATED"
-    BATCH_UPDATED = "BATCH_UPDATED"
-    BATCH_COMPLETED = "BATCH_COMPLETED"
-    BATCH_CANCELLED = "BATCH_CANCELLED"
+    BATCH_CREATED = "batch.created"
+    BATCH_UPDATED = "batch.updated"
+    BATCH_COMPLETED = "batch.completed"
+    BATCH_CANCELLED = "batch.cancelled"
