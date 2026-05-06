@@ -43,7 +43,7 @@ def test_create_batch(db_session):
     assert batch.product_name == "Test product"
     assert batch.planned_quantity == 10
     assert batch.produced_quantity == 0
-    assert batch.status == BatchStatus.created
+    assert batch.status == BatchStatus.CREATED
 
 
 def test_get_batches(db_session):
@@ -154,7 +154,7 @@ def test_in_progress(db_session):
     batch = BatchService.in_progress(db_session, batch_model.id)
 
     assert batch.id == batch_model.id
-    assert batch.status == BatchStatus.in_progress
+    assert batch.status == BatchStatus.IN_PROGRESS
 
 
 def test_in_progress_not_found(db_session):
@@ -185,7 +185,7 @@ def test_complete(db_session):
     batch = BatchService.complete(db_session, batch_model.id)
 
     assert batch.id == batch_model.id
-    assert batch.status == BatchStatus.completed
+    assert batch.status == BatchStatus.COMPLETED
     assert batch.completed_at is not None
 
 
@@ -213,7 +213,7 @@ def test_cancel(db_session):
     batch = BatchService.cancel(db_session, batch_model.id)
 
     assert batch.id == batch_model.id
-    assert batch.status == BatchStatus.cancelled
+    assert batch.status == BatchStatus.CANCELLED
 
 
 def test_cancel_not_found(db_session):

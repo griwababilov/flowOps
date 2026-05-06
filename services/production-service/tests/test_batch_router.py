@@ -204,7 +204,7 @@ def test_move_batch_to_in_progress(client):
     data = response.json()
 
     assert data["id"] == batch_id
-    assert data["status"] == "in_progress"
+    assert data["status"] == "IN_PROGRESS"
 
 
 def test_cannot_move_batch_to_in_progress_twice(client):
@@ -235,7 +235,7 @@ def test_complete_batch(client):
     data = response.json()
 
     assert data["id"] == batch_id
-    assert data["status"] == "completed"
+    assert data["status"] == "COMPLETED"
     assert data["completed_at"] is not None
 
 
@@ -262,7 +262,7 @@ def test_cancel_batch(client):
     data = response.json()
 
     assert data["id"] == batch_id
-    assert data["status"] == "cancelled"
+    assert data["status"] == "CANCELLED"
 
 
 def test_cannot_cancel_completed_batch(client):

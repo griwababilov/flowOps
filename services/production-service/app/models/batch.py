@@ -69,7 +69,7 @@ class Batch(Base):
     height_tolerance: Mapped[float] = mapped_column(Float, nullable=False)
 
     status: Mapped[BatchStatus] = mapped_column(
-        SqlEnum(BatchStatus), nullable=False, default=BatchStatus.created, index=True
+        SqlEnum(BatchStatus), nullable=False, default=BatchStatus.CREATED, index=True
     )
 
     created_at: Mapped[datetime] = mapped_column(

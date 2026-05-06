@@ -112,7 +112,7 @@ class BatchService:
                 status_code=status.HTTP_404_NOT_FOUND, detail="Batch not found"
             )
 
-        if batch.status != BatchStatus.created:
+        if batch.status != BatchStatus.CREATED:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Only created batches can be in_progress",
@@ -121,7 +121,7 @@ class BatchService:
         try:
             in_progress_batch = BatchRepository.update(
                 batch,
-                status=BatchStatus.in_progress,
+                status=BatchStatus.IN_PROGRESS,
             )
 
             db.commit()
@@ -142,7 +142,7 @@ class BatchService:
                 status_code=status.HTTP_404_NOT_FOUND, detail="Batch not found"
             )
 
-        if batch.status != BatchStatus.in_progress:
+        if batch.status != BatchStatus.IN_PROGRESS:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Only in_progress batches can be completed",
@@ -151,7 +151,7 @@ class BatchService:
         try:
             completed_batch = BatchRepository.update(
                 batch,
-                status=BatchStatus.completed,
+                status=BatchStatus.COMPLETED,
                 completed_at=datetime.now(timezone.utc),
             )
 
@@ -173,7 +173,7 @@ class BatchService:
                 status_code=status.HTTP_404_NOT_FOUND, detail="Batch not found"
             )
 
-        if batch.status == BatchStatus.completed:
+        if batch.status == BatchStatus.COMPLETED:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Completed batches can't be cancelled",
@@ -182,7 +182,7 @@ class BatchService:
         try:
             cancelled_batch = BatchRepository.update(
                 batch,
-                status=BatchStatus.cancelled,
+                status=BatchStatus.CANCELLED,
             )
 
             db.commit()
