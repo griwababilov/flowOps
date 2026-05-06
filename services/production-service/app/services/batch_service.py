@@ -142,7 +142,7 @@ class BatchService:
                 status_code=status.HTTP_404_NOT_FOUND, detail="Batch not found"
             )
 
-        if batch.status != BatchStatus.in_progress:
+        if batch.status != BatchStatus.IN_PROGRESS:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Only in_progress batches can be completed",

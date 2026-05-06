@@ -78,7 +78,7 @@ def test_create_defective_part_by_length(client):
     data = response.json()
 
     assert data["is_defective"] is True
-    assert data["defect_reason"] == "length_exceeds_tolerance"
+    assert data["defect_reason"] == "LENGTH_EXCEEDS_TOLERANCE"
 
 
 def test_get_parts(client):
@@ -148,7 +148,7 @@ def test_get_defective_parts_in_batch(client):
 
     assert len(data) == 1
     assert data[0]["is_defective"] is True
-    assert data[0]["defect_reason"] == "length_exceeds_tolerance"
+    assert data[0]["defect_reason"] == "LENGTH_EXCEEDS_TOLERANCE"
 
 
 def test_patch_part_dimensions_recalculates_defect(client):
@@ -165,7 +165,7 @@ def test_patch_part_dimensions_recalculates_defect(client):
     data = response.json()
 
     assert data["is_defective"] is True
-    assert data["defect_reason"] == "length_exceeds_tolerance"
+    assert data["defect_reason"] == "LENGTH_EXCEEDS_TOLERANCE"
 
 
 def test_patch_part_manual_rejection(client):
@@ -176,7 +176,7 @@ def test_patch_part_manual_rejection(client):
         f"/production/parts/{part['id']}",
         json={
             "is_defective": True,
-            "defect_reason": "manual_rejection",
+            "defect_reason": "MANUAL_REJECTION",
         },
     )
 
@@ -185,7 +185,7 @@ def test_patch_part_manual_rejection(client):
     data = response.json()
 
     assert data["is_defective"] is True
-    assert data["defect_reason"] == "manual_rejection"
+    assert data["defect_reason"] == "MANUAL_REJECTION"
 
 
 def test_patch_part_remove_defect(client):

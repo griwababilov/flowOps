@@ -10,13 +10,13 @@ class BatchStatus(str, Enum):
 
 class DefectReason(str, Enum):
     LENGTH_EXCEEDS_TOLERANCE = (
-        "length_exceeds_tolerance"  # Длина превышает допустимое отклонение
+        "LENGTH_EXCEEDS_TOLERANCE"  # Длина превышает допустимое отклонение
     )
     WIDTH_EXCEEDS_TOLERANCE = (
-        "width_exceeds_tolerance"  # Ширина превышает допустимое отклонение
+        "WIDTH_EXCEEDS_TOLERANCE"  # Ширина превышает допустимое отклонение
     )
     HEIGHT_EXCEEDS_TOLERANCE = (
-        "height_exceeds_tolerance"  # Высота превышает допустимое отклонение
+        "HEIGHT_EXCEEDS_TOLERANCE"  # Высота превышает допустимое отклонение
     )
 
     SURFACE_DAMAGE = "SURFACE_DAMAGE"  # Повреждение поверхности
