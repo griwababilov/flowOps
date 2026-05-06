@@ -23,6 +23,18 @@ services:
       - "8001:8000"
     restart: unless-stopped
 
+  notification-service:
+    build:
+      context: ./services/notification-service
+    container_name: notification-service
+    depends_on:
+      - notification-db
+    environment:
+      DATABASE_URL: postgresql://notification_user:notification_password@notification-db:5432/notification_db
+    ports:
+      - "8002:8000"
+    restart: unless-stopped
+
   auth-db:
     image: postgres:16
     container_name: auth-db
@@ -49,6 +61,20 @@ services:
       - "${PROD_DB_PORT}:5432"
     restart: unless-stopped
 
+  notification-db:
+    image: postgres:16
+    container_name: notification-db
+    environment:
+      POSTGRES_DB: ${NOTIFICATION_DB_NAME}
+      POSTGRES_USER: ${NOTIFICATION_DB_USER}
+      POSTGRES_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
+    volumes:
+      - notification_db_data:/var/lib/postgresql/data
+    ports:
+      - "${NOTIFICATION_DB_PORT}:5432"
+    restart: unless-stopped
+
 volumes:
   auth_db_data:
   production_db_data:
+  notification_db_data:
