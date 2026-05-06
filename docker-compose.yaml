@@ -1,0 +1,54 @@
+services:
+  auth-service:
+    build:
+      context: ./services/auth-service
+    container_name: auth-service
+    depends_on:
+      - auth-db
+    environment:
+      DATABASE_URL: postgresql://${AUTH_DB_USER}:${AUTH_DB_PASSWORD}@auth-db:5432/${AUTH_DB_NAME}
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  production-service:
+    build:
+      context: ./services/production-service
+    container_name: production-service
+    depends_on:
+      - production-db
+    environment:
+      DATABASE_URL: postgresql://${PROD_DB_USER}:${PROD_DB_PASSWORD}@production-db:5432/${PROD_DB_NAME}
+    ports:
+      - "8001:8000"
+    restart: unless-stopped
+
+  auth-db:
+    image: postgres:16
+    container_name: auth-db
+    environment:
+      POSTGRES_DB: ${AUTH_DB_NAME}
+      POSTGRES_USER: ${AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+    ports:
+      - "${AUTH_DB_PORT}:5432"
+    restart: unless-stopped
+
+  production-db:
+    image: postgres:16
+    container_name: production-db
+    environment:
+      POSTGRES_DB: ${PROD_DB_NAME}
+      POSTGRES_USER: ${PROD_DB_USER}
+      POSTGRES_PASSWORD: ${PROD_DB_PASSWORD}
+    volumes:
+      - production_db_data:/var/lib/postgresql/data
+    ports:
+      - "${PROD_DB_PORT}:5432"
+    restart: unless-stopped
+
+volumes:
+  auth_db_data:
+  production_db_data:

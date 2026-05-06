@@ -5,7 +5,6 @@ from passlib.context import CryptContext
 
 from app.core.config import settings
 
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -60,11 +59,11 @@ def decode_token(token: str, expected_type: str) -> str | None:
             settings.JWT_SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],
         )
-        
+
         if payload.get("type") != expected_type:
             return None
 
         return payload.get("sub")
-    
+
     except JWTError:
         return None

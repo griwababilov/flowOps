@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 
 from app.db.base import Base
 from app.models.batch import Batch
+from app.models.part import Part
 
 load_dotenv()
 

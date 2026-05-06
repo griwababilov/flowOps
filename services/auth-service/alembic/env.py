@@ -8,7 +8,8 @@ import sys
 import os
 
 from app.db.base import Base
-from app.models import *
+from app.models.refresh_token import RefreshToken
+from app.models.user import User
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
