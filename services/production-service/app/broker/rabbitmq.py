@@ -6,7 +6,7 @@ EXCHANGE_NAME: str = "flowops.events"
 
 
 def get_rabbitmq_connection() -> BlockingConnection:
-    connection = BlockingConnection(URLParameters(os.getenv["RABBITMQ_URL"]))
+    connection = BlockingConnection(URLParameters(os.getenv("RABBITMQ_URL")))
 
     return connection
 
