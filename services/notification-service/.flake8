@@ -6,3 +6,5 @@ exclude =
     __pycache__,
     .pytest_cache,
     alembic/versions
+per-file-ignores =
+    tests/conftest.py:E402
