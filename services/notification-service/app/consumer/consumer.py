@@ -1,0 +1,57 @@
+import json
+
+from pika.adapters.blocking_connection import BlockingChannel
+from pika.spec import Basic, BasicProperties
+
+from app.consumer.handlers import handle_event
+from app.consumer.rabbitmq import QUEUE_NAME, get_channel
+from app.db.session import SessionLocal
+
+
+def process_message(
+    channel: BlockingChannel,
+    method: Basic.Deliver,
+    properties: BasicProperties,
+    body: bytes,
+) -> None:
+    db = SessionLocal()
+
+    try:
+        payload = json.loads(body.decode("utf-8"))
+
+        handle_event(db=db, payload=payload)
+
+        channel.basic_ack(delivery_tag=method.delivery_tag)
+
+    except Exception:
+        db.rollback()
+        channel.basic_nack(
+            delivery_tag=method.delivery_tag,
+            requeue=False,
+        )
+        raise
+
+    finally:
+        db.close()
+
+
+def start_consumer() -> None:
+    connection, channel = get_channel()
+
+    try:
+        channel.basic_consume(
+            queue=QUEUE_NAME,
+            on_message_callback=process_message,
+            auto_ack=False,
+        )
+
+        print(f"Consumer started. Listening queue: {QUEUE_NAME}")
+        channel.start_consuming()
+
+    finally:
+        if connection and connection.is_open:
+            connection.close()
+
+
+if __name__ == "__main__":
+    start_consumer()

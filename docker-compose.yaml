@@ -11,6 +11,7 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     restart: unless-stopped
+
   auth-service:
     build:
       context: ./services/auth-service
@@ -47,9 +48,21 @@ services:
     environment:
       DATABASE_URL: postgresql://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASSWORD}@notification-db:5432/${NOTIFICATION_DB_NAME}
       RABBITMQ_URL: ${RABBITMQ_URL}
-
     ports:
       - "8002:8000"
+    restart: unless-stopped
+
+  notification-consumer:
+    build:
+      context: ./services/notification-service
+    container_name: notification-consumer
+    depends_on:
+      - notification-db
+      - rabbitmq
+    environment:
+      DATABASE_URL: postgresql://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASSWORD}@notification-db:5432/${NOTIFICATION_DB_NAME}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+    command: python -m app.consumer.consumer
     restart: unless-stopped
 
   auth-db:
