@@ -1,11 +1,15 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+from datetime import datetime, timezone
 
 from app.repositories.part_repository import PartRepository
 from app.repositories.batch_repository import BatchRepository
 from app.schemas.part import PartCreate, PartUpdate, PartResponse
 from app.schemas.batch import BatchPartParametrs
+from app.models.batch import Batch
+from app.models.part import Part
 from app.core.enums import DefectReason
+from app.broker.publisher import publish_event
 
 
 class PartService:
@@ -31,7 +35,7 @@ class PartService:
             db=db,
             **part_data.model_dump(),
             is_defective=is_defective,
-            defect_reason=defect_reason
+            defect_reason=defect_reason,
         )
 
         batch.produced_quantity += 1
@@ -45,6 +49,14 @@ class PartService:
             db.commit()
             db.refresh(part)
             db.refresh(batch)
+            if is_defective:
+                try:
+                    PartService._publish_defective(
+                        part=part, batch=batch, action="created"
+                    )
+                except Exception:
+                    pass
+
             return PartResponse.model_validate(part)
         except Exception:
             db.rollback()
@@ -176,6 +188,14 @@ class PartService:
             db.refresh(updated_part)
             db.refresh(batch)
 
+            try:
+                if not old_is_defective and updated_part.is_defective:
+                    PartService._publish_defective(
+                        part=updated_part, batch=batch, action="updated"
+                    )
+            except Exception:
+                pass
+
             return PartResponse.model_validate(updated_part)
 
         except Exception:
@@ -237,3 +257,16 @@ class PartService:
             return (True, DefectReason.HEIGHT_EXCEEDS_TOLERANCE)
 
         return (False, None)
+
+    @staticmethod
+    def _publish_defective(part: Part, batch: Batch, action: str) -> None:
+        payload = {
+            "event_type": "part.defective_detected",
+            "part_id": part.id,
+            "batch_id": batch.id,
+            "defect_reason": part.defect_reason.value,
+            "action": action,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+        publish_event(routing_key="part.defective_detected", payload=payload)

@@ -1,4 +1,16 @@
 services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: flowops-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: unless-stopped
   auth-service:
     build:
       context: ./services/auth-service
@@ -17,10 +29,27 @@ services:
     container_name: production-service
     depends_on:
       - production-db
+      - rabbitmq
     environment:
       DATABASE_URL: postgresql://${PROD_DB_USER}:${PROD_DB_PASSWORD}@production-db:5432/${PROD_DB_NAME}
+      RABBITMQ_URL: ${RABBITMQ_URL}
     ports:
       - "8001:8000"
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+    container_name: notification-service
+    depends_on:
+      - notification-db
+      - rabbitmq
+    environment:
+      DATABASE_URL: postgresql://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASSWORD}@notification-db:5432/${NOTIFICATION_DB_NAME}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+
+    ports:
+      - "8002:8000"
     restart: unless-stopped
 
   auth-db:
@@ -49,6 +78,21 @@ services:
       - "${PROD_DB_PORT}:5432"
     restart: unless-stopped
 
+  notification-db:
+    image: postgres:16
+    container_name: notification-db
+    environment:
+      POSTGRES_DB: ${NOTIFICATION_DB_NAME}
+      POSTGRES_USER: ${NOTIFICATION_DB_USER}
+      POSTGRES_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
+    volumes:
+      - notification_db_data:/var/lib/postgresql/data
+    ports:
+      - "${NOTIFICATION_DB_PORT}:5432"
+    restart: unless-stopped
+
 volumes:
   auth_db_data:
   production_db_data:
+  notification_db_data:
+  rabbitmq_data:
