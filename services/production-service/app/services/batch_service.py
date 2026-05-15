@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+from datetime import datetime, timezone
 
 from app.repositories.batch_repository import BatchRepository
 from app.schemas.batch import (
@@ -9,8 +10,8 @@ from app.schemas.batch import (
     BatchStatsResponse,
 )
 from app.core.enums import BatchStatus
-
-from datetime import datetime, timezone
+from app.broker.publisher import publish_event
+from app.models.batch import Batch
 
 
 class BatchService:
@@ -158,6 +159,11 @@ class BatchService:
             db.commit()
             db.refresh(completed_batch)
 
+            try:
+                BatchService._publish_complete(completed_batch)
+            except Exception:
+                pass
+
             return BatchResponse.model_validate(completed_batch)
 
         except Exception:
@@ -210,3 +216,24 @@ class BatchService:
         except Exception:
             db.rollback()
             raise
+
+    @staticmethod
+    def _publish_complete(completed_batch: Batch) -> None:
+        payload = {
+            "event_type": "batch.completed",
+            "batch_id": completed_batch.id,
+            "batch_number": completed_batch.batch_number,
+            "product_name": completed_batch.product_name,
+            "planned_quantity": completed_batch.planned_quantity,
+            "produced_quantity": completed_batch.produced_quantity,
+            "accepted_quantity": completed_batch.accepted_quantity,
+            "defect_quantity": completed_batch.defect_quantity,
+            "defect_rate": (
+                completed_batch.defect_quantity
+                / completed_batch.produced_quantity
+                * 100
+                if completed_batch.produced_quantity > 0
+                else 0
+            ),
+        }
+        publish_event(routing_key="batch.completed", payload=payload)
