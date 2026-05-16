@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
+import logging
 
 from app.repositories.batch_repository import BatchRepository
 from app.schemas.batch import (
@@ -13,6 +14,8 @@ from app.core.enums import BatchStatus
 from app.broker.publisher import publish_event
 from app.models.batch import Batch
 
+
+logger = logging.getLogger(__name__)
 
 class BatchService:
 
@@ -161,8 +164,9 @@ class BatchService:
 
             try:
                 BatchService._publish_complete(completed_batch)
+                logger.info(f"Successfully published batch completed event for batch_id={completed_batch.id}")
             except Exception:
-                pass
+                logger.exception(f"Failed to publish batch complete event for batch_id={completed_batch.id}")
 
             return BatchResponse.model_validate(completed_batch)
 
@@ -235,5 +239,6 @@ class BatchService:
                 if completed_batch.produced_quantity > 0
                 else 0
             ),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
         publish_event(routing_key="batch.completed", payload=payload)

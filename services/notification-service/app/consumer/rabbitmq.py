@@ -6,7 +6,6 @@ from pika import BlockingConnection, URLParameters
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.exceptions import AMQPConnectionError
 
-
 log = logging.getLogger(__name__)
 
 EXCHANGE_NAME: str = "flowops.events"

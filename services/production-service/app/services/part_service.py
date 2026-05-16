@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
+import logging
 
 from app.repositories.part_repository import PartRepository
 from app.repositories.batch_repository import BatchRepository
@@ -10,6 +11,9 @@ from app.models.batch import Batch
 from app.models.part import Part
 from app.core.enums import DefectReason
 from app.broker.publisher import publish_event
+
+
+logger = logging.getLogger(__name__)
 
 
 class PartService:
@@ -54,8 +58,9 @@ class PartService:
                     PartService._publish_defective(
                         part=part, batch=batch, action="created"
                     )
+                    logger.info(f"Success to publish defective part event for part_id={part.id}")
                 except Exception:
-                    pass
+                    logger.exception(f"Failed to publish defective part event for part_id={part.id}")
 
             return PartResponse.model_validate(part)
         except Exception:
@@ -193,8 +198,11 @@ class PartService:
                     PartService._publish_defective(
                         part=updated_part, batch=batch, action="updated"
                     )
+                    logger.info(f"Success to publish defective part event for part_id={updated_part.id}")
+
             except Exception:
-                pass
+                logger.exception(f"Failed to publish defective part event for part_id: {updated_part.id}")
+
 
             return PartResponse.model_validate(updated_part)
 
