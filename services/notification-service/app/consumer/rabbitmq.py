@@ -10,6 +10,8 @@ log = logging.getLogger(__name__)
 
 EXCHANGE_NAME: str = "flowops.events"
 QUEUE_NAME: str = "notification-service.queue"
+DLX_NAME: str = "notification-service.dlx"
+DLQ_NAME: str = "notification-service.dlq"
 
 ROUTING_KEYS: tuple[str, ...] = (
     "batch.completed",
@@ -46,9 +48,23 @@ def get_channel() -> tuple[BlockingConnection, BlockingChannel]:
         durable=True,
     )
 
+    channel.exchange_declare(
+        exchange=DLX_NAME,
+        exchange_type="direct",
+        durable=True,
+    )
+
+    channel.queue_declare(queue=DLQ_NAME, durable=True)
+
+    channel.queue_bind(queue=DLQ_NAME, exchange=DLX_NAME, routing_key=DLQ_NAME)
+
     channel.queue_declare(
         queue=QUEUE_NAME,
         durable=True,
+        arguments={
+            "x-dead-letter-exchange": DLX_NAME,
+            "x-dead-letter-routing-key": DLQ_NAME,
+        },
     )
 
     for routing_key in ROUTING_KEYS:
