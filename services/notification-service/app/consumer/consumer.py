@@ -8,7 +8,6 @@ from app.consumer.rabbitmq import QUEUE_NAME, get_channel
 from app.db.session import SessionLocal
 import logging
 
-
 logger = logging.getLogger(__name__)
 
 
