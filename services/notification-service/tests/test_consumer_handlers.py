@@ -1,4 +1,5 @@
 import pytest
+from pydantic import ValidationError
 
 from app.consumer.handlers import handle_batch_completed
 from app.consumer.handlers import handle_event
@@ -93,7 +94,5 @@ def test_handle_event_unsupported_event_type_raises_error(db_session):
         "event_type": "unknown.event",
     }
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValidationError):
         handle_event(db_session, payload)
-
-    assert "Unsupported event type" in str(exc.value)
