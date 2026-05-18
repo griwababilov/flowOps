@@ -35,7 +35,7 @@ def upgrade() -> None:
     sa.Column('length_tolerance', sa.Float(), nullable=False),
     sa.Column('width_tolerance', sa.Float(), nullable=False),
     sa.Column('height_tolerance', sa.Float(), nullable=False),
-    sa.Column('status', sa.Enum('created', 'in_progress', 'completed', 'cancelled', name='batchstatus'), nullable=False),
+    sa.Column('status',     sa.Enum("CREATED", "IN_PROGRESS", "COMPLETED", "CANCELLED", name="batchstatus"), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.CheckConstraint('accepted_quantity + defect_quantity <= produced_quantity', name='check_total_quality_counts_valid'),
     sa.CheckConstraint('accepted_quantity >= 0', name='check_accepted_quantity_non_negative'),
