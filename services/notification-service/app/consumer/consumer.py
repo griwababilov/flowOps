@@ -6,6 +6,10 @@ from pika.spec import Basic, BasicProperties
 from app.consumer.handlers import handle_event
 from app.consumer.rabbitmq import QUEUE_NAME, get_channel
 from app.db.session import SessionLocal
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def process_message(
@@ -24,12 +28,12 @@ def process_message(
         channel.basic_ack(delivery_tag=method.delivery_tag)
 
     except Exception:
+        logger.exception("Failed to process RabbitMQ message")
         db.rollback()
         channel.basic_nack(
             delivery_tag=method.delivery_tag,
             requeue=False,
         )
-        raise
 
     finally:
         db.close()
