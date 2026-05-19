@@ -12,7 +12,6 @@ from app.models.part import Part
 from app.core.enums import DefectReason
 from app.broker.publisher import publish_event
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -58,9 +57,13 @@ class PartService:
                     PartService._publish_defective(
                         part=part, batch=batch, action="created"
                     )
-                    logger.info(f"Success to publish defective part event for part_id={part.id}")
+                    logger.info(
+                        f"Success to publish defective part event for part_id={part.id}"
+                    )
                 except Exception:
-                    logger.exception(f"Failed to publish defective part event for part_id={part.id}")
+                    logger.exception(
+                        f"Failed to publish defective part event for part_id={part.id}"
+                    )
 
             return PartResponse.model_validate(part)
         except Exception:
@@ -198,11 +201,14 @@ class PartService:
                     PartService._publish_defective(
                         part=updated_part, batch=batch, action="updated"
                     )
-                    logger.info(f"Success to publish defective part event for part_id={updated_part.id}")
+                    logger.info(
+                        f"Success to publish defective part event for part_id={updated_part.id}"
+                    )
 
             except Exception:
-                logger.exception(f"Failed to publish defective part event for part_id: {updated_part.id}")
-
+                logger.exception(
+                    f"Failed to publish defective part event for part_id: {updated_part.id}"
+                )
 
             return PartResponse.model_validate(updated_part)
 

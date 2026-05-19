@@ -14,8 +14,8 @@ from app.core.enums import BatchStatus
 from app.broker.publisher import publish_event
 from app.models.batch import Batch
 
-
 logger = logging.getLogger(__name__)
+
 
 class BatchService:
 
@@ -164,9 +164,13 @@ class BatchService:
 
             try:
                 BatchService._publish_complete(completed_batch)
-                logger.info(f"Successfully published batch completed event for batch_id={completed_batch.id}")
+                logger.info(
+                    f"Successfully published batch completed event for batch_id={completed_batch.id}"
+                )
             except Exception:
-                logger.exception(f"Failed to publish batch complete event for batch_id={completed_batch.id}")
+                logger.exception(
+                    f"Failed to publish batch complete event for batch_id={completed_batch.id}"
+                )
 
             return BatchResponse.model_validate(completed_batch)
 
