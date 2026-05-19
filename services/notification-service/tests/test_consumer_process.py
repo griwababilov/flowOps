@@ -52,16 +52,39 @@ def test_process_message_nack_on_error():
         with patch("app.consumer.consumer.handle_event") as mock_handle_event:
             mock_handle_event.side_effect = ValueError("Unsupported event type")
 
-            try:
-                process_message(channel, method, properties, body)
-            except ValueError:
-                pass
+            process_message(channel, method, properties, body)
+            db.rollback.assert_called_once()
 
     mock_handle_event.assert_called_once_with(db=db, payload=payload)
     db.rollback.assert_called_once()
     channel.basic_ack.assert_not_called()
     channel.basic_nack.assert_called_once_with(
         delivery_tag=2,
+        requeue=False,
+    )
+    db.close.assert_called_once()
+
+
+def test_process_message_nack_on_invalid_json():
+    channel = Mock()
+    method = Mock()
+    method.delivery_tag = 3
+    properties = Mock()
+
+    body = b"{invalid-json"
+
+    with patch("app.consumer.consumer.SessionLocal") as mock_session_local:
+        db = Mock()
+        mock_session_local.return_value = db
+
+        with patch("app.consumer.consumer.handle_event") as mock_handle_event:
+            process_message(channel, method, properties, body)
+
+    mock_handle_event.assert_not_called()
+    db.rollback.assert_called_once()
+    channel.basic_ack.assert_not_called()
+    channel.basic_nack.assert_called_once_with(
+        delivery_tag=3,
         requeue=False,
     )
     db.close.assert_called_once()
