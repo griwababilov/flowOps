@@ -20,6 +20,8 @@ services:
       - auth-db
     environment:
       DATABASE_URL: postgresql://${AUTH_DB_USER}:${AUTH_DB_PASSWORD}@auth-db:5432/${AUTH_DB_NAME}
+    volumes:
+      - ./services/auth-service:/app
     ports:
       - "8000:8000"
     restart: unless-stopped
@@ -34,6 +36,8 @@ services:
     environment:
       DATABASE_URL: postgresql://${PROD_DB_USER}:${PROD_DB_PASSWORD}@production-db:5432/${PROD_DB_NAME}
       RABBITMQ_URL: ${RABBITMQ_URL}
+    volumes:
+      - ./services/production-service:/app
     ports:
       - "8001:8000"
     restart: unless-stopped
@@ -48,6 +52,8 @@ services:
     environment:
       DATABASE_URL: postgresql://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASSWORD}@notification-db:5432/${NOTIFICATION_DB_NAME}
       RABBITMQ_URL: ${RABBITMQ_URL}
+    volumes:
+      - ./services/notification-service:/app
     ports:
       - "8002:8000"
     restart: unless-stopped
@@ -62,6 +68,8 @@ services:
     environment:
       DATABASE_URL: postgresql://${NOTIFICATION_DB_USER}:${NOTIFICATION_DB_PASSWORD}@notification-db:5432/${NOTIFICATION_DB_NAME}
       RABBITMQ_URL: ${RABBITMQ_URL}
+    volumes:
+      - ./services/notification-service:/app
     command: python -m app.consumer.consumer
     restart: unless-stopped
 
