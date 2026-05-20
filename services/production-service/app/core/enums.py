@@ -24,3 +24,9 @@ class DefectReason(str, Enum):
 
     SENSOR_ERROR = "SENSOR_ERROR"  # Ошибка датчика / измерения
     MANUAL_REJECTION = "MANUAL_REJECTION"  # Ручная отбраковка оператором
+
+
+class OutboxEventStatus(str, Enum):
+    PENDING = "pending"
+    PUBLISHED = "published"
+    FAILED = "failed"
