@@ -54,10 +54,12 @@ class PartService:
                 db.flush()
 
                 payload = {
+                    "event_type": "part.defective_detected",
                     "part_id": part.id,
                     "batch_id": batch.id,
                     "defect_reason": defect_reason.value if defect_reason else None,
-                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "action": "created",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
 
                 OutboxRepository.create(
@@ -198,11 +200,12 @@ class PartService:
                     reason = updated_part.defect_reason
 
                     payload = {
+                        "event_type": "part.defective_detected",
                         "part_id": updated_part.id,
                         "batch_id": batch.id,
                         "defect_reason": (reason.value if reason else None),
-                        "created_at": datetime.now(timezone.utc).isoformat(),
-                        "source": "update",
+                        "action": "update",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                     }
 
                     OutboxRepository.create(
