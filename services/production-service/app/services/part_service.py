@@ -52,7 +52,7 @@ class PartService:
         try:
             if is_defective:
                 db.flush()
-                
+
                 payload = {
                     "part_id": part.id,
                     "batch_id": batch.id,
@@ -200,9 +200,7 @@ class PartService:
                     payload = {
                         "part_id": updated_part.id,
                         "batch_id": batch.id,
-                        "defect_reason": (
-                            reason.value if reason else None
-                        ),
+                        "defect_reason": (reason.value if reason else None),
                         "created_at": datetime.now(timezone.utc).isoformat(),
                         "source": "update",
                     }
