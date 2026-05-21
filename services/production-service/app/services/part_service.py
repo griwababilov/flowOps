@@ -10,6 +10,7 @@ from app.schemas.batch import BatchPartParametrs
 from app.models.batch import Batch
 from app.models.part import Part
 from app.core.enums import DefectReason
+from app.repositories.outbox_repository import OutboxRepository
 from app.broker.publisher import publish_event
 
 logger = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ class PartService:
                 status_code=status.HTTP_404_NOT_FOUND, detail="Batch not found"
             )
 
-        if batch.accepted_quantity >= batch.planned_quantity:
+        if batch.produced_quantity >= batch.planned_quantity:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Batch is already full"
             )
@@ -49,21 +50,26 @@ class PartService:
             batch.accepted_quantity += 1
 
         try:
+            if is_defective:
+                db.flush()
+                
+                payload = {
+                    "part_id": part.id,
+                    "batch_id": batch.id,
+                    "defect_reason": defect_reason.value if defect_reason else None,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                }
+
+                OutboxRepository.create(
+                    db=db,
+                    event_type="part.defective_detected",
+                    routing_key="part.defective_detected",
+                    payload=payload,
+                )
+
             db.commit()
             db.refresh(part)
             db.refresh(batch)
-            if is_defective:
-                try:
-                    PartService._publish_defective(
-                        part=part, batch=batch, action="created"
-                    )
-                    logger.info(
-                        f"Success to publish defective part event for part_id={part.id}"
-                    )
-                except Exception:
-                    logger.exception(
-                        f"Failed to publish defective part event for part_id={part.id}"
-                    )
 
             return PartResponse.model_validate(part)
         except Exception:
@@ -188,6 +194,26 @@ class PartService:
                 if updated_part.is_defective:
                     batch.defect_quantity += 1
                     batch.accepted_quantity = max(batch.accepted_quantity - 1, 0)
+
+                    reason = updated_part.defect_reason
+
+                    payload = {
+                        "part_id": updated_part.id,
+                        "batch_id": batch.id,
+                        "defect_reason": (
+                            reason.value if reason else None
+                        ),
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "source": "update",
+                    }
+
+                    OutboxRepository.create(
+                        db=db,
+                        event_type="part.defective_detected",
+                        routing_key="part.defective_detected",
+                        payload=payload,
+                    )
+
                 else:
                     batch.accepted_quantity += 1
                     batch.defect_quantity = max(batch.defect_quantity - 1, 0)
@@ -195,20 +221,6 @@ class PartService:
             db.commit()
             db.refresh(updated_part)
             db.refresh(batch)
-
-            try:
-                if not old_is_defective and updated_part.is_defective:
-                    PartService._publish_defective(
-                        part=updated_part, batch=batch, action="updated"
-                    )
-                    logger.info(
-                        f"Success to publish defective part event for part_id={updated_part.id}"
-                    )
-
-            except Exception:
-                logger.exception(
-                    f"Failed to publish defective part event for part_id: {updated_part.id}"
-                )
 
             return PartResponse.model_validate(updated_part)
 
