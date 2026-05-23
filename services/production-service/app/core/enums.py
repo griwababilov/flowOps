@@ -28,5 +28,6 @@ class DefectReason(str, Enum):
 
 class OutboxEventStatus(str, Enum):
     PENDING = "pending"
+    PROCESSING = "processing"
     PUBLISHED = "published"
     FAILED = "failed"
