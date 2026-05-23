@@ -315,4 +315,3 @@ class PartService:
             return (True, DefectReason.HEIGHT_EXCEEDS_TOLERANCE)
 
         return (False, None)
-    
