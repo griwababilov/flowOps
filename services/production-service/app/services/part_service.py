@@ -7,11 +7,8 @@ from app.repositories.part_repository import PartRepository
 from app.repositories.batch_repository import BatchRepository
 from app.schemas.part import PartCreate, PartUpdate, PartResponse
 from app.schemas.batch import BatchPartParametrs
-from app.models.batch import Batch
-from app.models.part import Part
 from app.core.enums import DefectReason, BatchStatus
 from app.repositories.outbox_repository import OutboxRepository
-from app.broker.publisher import publish_event
 
 logger = logging.getLogger(__name__)
 
@@ -318,16 +315,4 @@ class PartService:
             return (True, DefectReason.HEIGHT_EXCEEDS_TOLERANCE)
 
         return (False, None)
-
-    @staticmethod
-    def _publish_defective(part: Part, batch: Batch, action: str) -> None:
-        payload = {
-            "event_type": "part.defective_detected",
-            "part_id": part.id,
-            "batch_id": batch.id,
-            "defect_reason": part.defect_reason.value,
-            "action": action,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        }
-
-        publish_event(routing_key="part.defective_detected", payload=payload)
+    
