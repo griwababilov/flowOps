@@ -9,7 +9,7 @@ from app.schemas.part import PartCreate, PartUpdate, PartResponse
 from app.schemas.batch import BatchPartParametrs
 from app.models.batch import Batch
 from app.models.part import Part
-from app.core.enums import DefectReason
+from app.core.enums import DefectReason, BatchStatus
 from app.repositories.outbox_repository import OutboxRepository
 from app.broker.publisher import publish_event
 
@@ -24,17 +24,21 @@ class PartService:
 
         if not batch:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Batch not found"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Batch not found",
             )
 
         if batch.produced_quantity >= batch.planned_quantity:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Batch is already full"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Batch is already full",
             )
 
         is_defective, defect_reason = PartService.calculate_defect_status(
-            batch, part_data
+            batch,
+            part_data,
         )
+
         part = PartRepository.create(
             db=db,
             **part_data.model_dump(),
@@ -69,11 +73,41 @@ class PartService:
                     payload=payload,
                 )
 
+            should_complete_batch = (
+                batch.status == BatchStatus.IN_PROGRESS
+                and batch.produced_quantity == batch.planned_quantity
+            )
+
+            if should_complete_batch:
+                batch.status = BatchStatus.COMPLETED
+                batch.completed_at = datetime.now(timezone.utc)
+
+                defect_rate = (
+                    batch.defect_quantity / batch.produced_quantity * 100
+                    if batch.produced_quantity
+                    else 0.0
+                )
+
+                payload = {
+                    "event_type": "batch.completed",
+                    "batch_number": batch.batch_number,
+                    "defect_rate": defect_rate,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+
+                OutboxRepository.create(
+                    db=db,
+                    event_type="batch.completed",
+                    routing_key="batch.completed",
+                    payload=payload,
+                )
+
             db.commit()
             db.refresh(part)
             db.refresh(batch)
 
             return PartResponse.model_validate(part)
+
         except Exception:
             db.rollback()
             raise

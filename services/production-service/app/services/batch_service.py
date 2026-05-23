@@ -10,9 +10,8 @@ from app.schemas.batch import (
     BatchUpdate,
     BatchStatsResponse,
 )
+from app.repositories.outbox_repository import OutboxRepository
 from app.core.enums import BatchStatus
-from app.broker.publisher import publish_event
-from app.models.batch import Batch
 
 logger = logging.getLogger(__name__)
 
@@ -159,18 +158,30 @@ class BatchService:
                 completed_at=datetime.now(timezone.utc),
             )
 
+            defect_rate = (
+                completed_batch.defect_quantity
+                / completed_batch.produced_quantity
+                * 100
+                if completed_batch.produced_quantity
+                else 0.0
+            )
+
+            payload = {
+                "event_type": "batch.completed",
+                "batch_number": completed_batch.batch_number,
+                "defect_rate": defect_rate,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+
+            OutboxRepository.create(
+                db=db,
+                event_type="batch.completed",
+                routing_key="batch.completed",
+                payload=payload,
+            )
+
             db.commit()
             db.refresh(completed_batch)
-
-            try:
-                BatchService._publish_complete(completed_batch)
-                logger.info(
-                    f"Successfully published batch completed event for batch_id={completed_batch.id}"
-                )
-            except Exception:
-                logger.exception(
-                    f"Failed to publish batch complete event for batch_id={completed_batch.id}"
-                )
 
             return BatchResponse.model_validate(completed_batch)
 
@@ -224,25 +235,3 @@ class BatchService:
         except Exception:
             db.rollback()
             raise
-
-    @staticmethod
-    def _publish_complete(completed_batch: Batch) -> None:
-        payload = {
-            "event_type": "batch.completed",
-            "batch_id": completed_batch.id,
-            "batch_number": completed_batch.batch_number,
-            "product_name": completed_batch.product_name,
-            "planned_quantity": completed_batch.planned_quantity,
-            "produced_quantity": completed_batch.produced_quantity,
-            "accepted_quantity": completed_batch.accepted_quantity,
-            "defect_quantity": completed_batch.defect_quantity,
-            "defect_rate": (
-                completed_batch.defect_quantity
-                / completed_batch.produced_quantity
-                * 100
-                if completed_batch.produced_quantity > 0
-                else 0
-            ),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        }
-        publish_event(routing_key="batch.completed", payload=payload)

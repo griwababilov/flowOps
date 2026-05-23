@@ -35,7 +35,6 @@ def process_outbox_events() -> None:
 
 
 def main() -> None:
-    print("START")
     while True:
         process_outbox_events()
         time.sleep(PUBLISH_INTERVAL_SECONDS)
