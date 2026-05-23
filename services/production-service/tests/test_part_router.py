@@ -1,3 +1,7 @@
+from app.core.enums import OutboxEventStatus
+from app.models.outbox_event import OutboxEvent
+
+
 def make_batch_payload(batch_number="Batch-for-parts"):
     return {
         "batch_number": batch_number,
@@ -255,3 +259,170 @@ def test_create_part_with_invalid_dimensions_returns_422(client):
     )
 
     assert response.status_code == 422
+
+
+def test_create_defective_part_creates_outbox_event(client, db_session):
+    batch = create_batch(client, batch_number="Outbox-defective-create")
+
+    response = client.post(
+        "/production/parts",
+        json=make_part_payload(batch["id"], length=106),
+    )
+
+    assert response.status_code == 201
+
+    part = response.json()
+
+    assert part["is_defective"] is True
+    assert part["defect_reason"] == "LENGTH_EXCEEDS_TOLERANCE"
+
+    outbox_event = (
+        db_session.query(OutboxEvent)
+        .filter(OutboxEvent.event_type == "part.defective_detected")
+        .order_by(OutboxEvent.id.desc())
+        .first()
+    )
+
+    assert outbox_event is not None
+    assert outbox_event.routing_key == "part.defective_detected"
+    assert outbox_event.status == OutboxEventStatus.PENDING
+
+    assert outbox_event.payload["event_type"] == "part.defective_detected"
+    assert outbox_event.payload["part_id"] == part["id"]
+    assert outbox_event.payload["batch_id"] == batch["id"]
+    assert outbox_event.payload["defect_reason"] == "LENGTH_EXCEEDS_TOLERANCE"
+    assert outbox_event.payload["action"] == "created"
+    assert outbox_event.payload["timestamp"] is not None
+
+
+def test_create_accepted_part_does_not_create_outbox_event(client, db_session):
+    batch = create_batch(client, batch_number="Outbox-accepted-create")
+
+    before_count = db_session.query(OutboxEvent).count()
+
+    response = client.post(
+        "/production/parts",
+        json=make_part_payload(batch["id"]),
+    )
+
+    assert response.status_code == 201
+
+    part = response.json()
+
+    assert part["is_defective"] is False
+    assert part["defect_reason"] is None
+
+    after_count = db_session.query(OutboxEvent).count()
+
+    assert after_count == before_count
+
+
+def test_patch_accepted_part_to_defective_creates_outbox_event(client, db_session):
+    batch = create_batch(client, batch_number="Outbox-defective-update")
+    part = create_part(client, batch["id"])
+
+    assert part["is_defective"] is False
+
+    response = client.patch(
+        f"/production/parts/{part['id']}",
+        json={"length_actual": 106},
+    )
+
+    assert response.status_code == 200
+
+    updated_part = response.json()
+
+    assert updated_part["is_defective"] is True
+    assert updated_part["defect_reason"] == "LENGTH_EXCEEDS_TOLERANCE"
+
+    outbox_event = (
+        db_session.query(OutboxEvent)
+        .filter(OutboxEvent.event_type == "part.defective_detected")
+        .order_by(OutboxEvent.id.desc())
+        .first()
+    )
+
+    assert outbox_event is not None
+    assert outbox_event.routing_key == "part.defective_detected"
+    assert outbox_event.status == OutboxEventStatus.PENDING
+
+    assert outbox_event.payload["event_type"] == "part.defective_detected"
+    assert outbox_event.payload["part_id"] == part["id"]
+    assert outbox_event.payload["batch_id"] == batch["id"]
+    assert outbox_event.payload["defect_reason"] == "LENGTH_EXCEEDS_TOLERANCE"
+    assert outbox_event.payload["action"] == "update"
+    assert outbox_event.payload["timestamp"] is not None
+
+
+def test_patch_defective_part_to_defective_does_not_create_duplicate_outbox_event(
+    client,
+    db_session,
+):
+    batch = create_batch(client, batch_number="Outbox-no-duplicate-update")
+    part = create_part(client, batch["id"], length=106)
+
+    assert part["is_defective"] is True
+
+    before_count = (
+        db_session.query(OutboxEvent)
+        .filter(OutboxEvent.event_type == "part.defective_detected")
+        .count()
+    )
+
+    response = client.patch(
+        f"/production/parts/{part['id']}",
+        json={"width_actual": 53},
+    )
+
+    assert response.status_code == 200
+
+    updated_part = response.json()
+
+    assert updated_part["is_defective"] is True
+
+    after_count = (
+        db_session.query(OutboxEvent)
+        .filter(OutboxEvent.event_type == "part.defective_detected")
+        .count()
+    )
+
+    assert after_count == before_count
+
+
+def test_create_last_part_creates_batch_completed_outbox_event(client, db_session):
+    batch_payload = make_batch_payload(batch_number="Outbox-batch-completed")
+    batch_payload["planned_quantity"] = 1
+
+    batch_response = client.post("/production/batches", json=batch_payload)
+
+    assert batch_response.status_code == 201
+
+    batch = batch_response.json()
+    batch_id = batch["id"]
+
+    in_progress_response = client.post(f"/production/batches/{batch_id}/in-progress")
+
+    assert in_progress_response.status_code == 200
+
+    response = client.post(
+        "/production/parts",
+        json=make_part_payload(batch_id),
+    )
+
+    assert response.status_code == 201
+
+    outbox_event = (
+        db_session.query(OutboxEvent)
+        .filter(OutboxEvent.event_type == "batch.completed")
+        .order_by(OutboxEvent.id.desc())
+        .first()
+    )
+
+    assert outbox_event is not None
+    assert outbox_event.routing_key == "batch.completed"
+    assert outbox_event.status == OutboxEventStatus.PENDING
+
+    assert outbox_event.payload["event_type"] == "batch.completed"
+    assert outbox_event.payload["batch_number"] == "Outbox-batch-completed"
+    assert outbox_event.payload["defect_rate"] == 0.0
+    assert outbox_event.payload["timestamp"] is not None
