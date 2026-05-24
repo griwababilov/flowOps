@@ -16,6 +16,10 @@ class NotificationRepository:
         return db.query(Notification).filter(Notification.id == notification_id).first()
 
     @staticmethod
+    def get_by_event_id(db: Session, event_id: str) -> Notification | None:
+        return db.query(Notification).filter(Notification.event_id == event_id).first()
+
+    @staticmethod
     def get_all(db: Session) -> list[Notification]:
         return db.query(Notification).all()
 

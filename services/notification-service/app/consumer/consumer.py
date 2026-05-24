@@ -6,6 +6,7 @@ from pika.spec import Basic, BasicProperties
 from app.consumer.handlers import handle_event
 from app.consumer.rabbitmq import QUEUE_NAME, get_channel
 from app.db.session import SessionLocal
+from app.schemas.events import EventEnvelope
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,9 +21,14 @@ def process_message(
     db = SessionLocal()
 
     try:
-        payload = json.loads(body.decode("utf-8"))
+        message = EventEnvelope.model_validate(json.loads(body.decode("utf-8")))
 
-        handle_event(db=db, payload=payload)
+        handle_event(
+            db=db,
+            event_id=message.event_id,
+            event_type=message.event_type,
+            payload=message.payload,
+        )
 
         channel.basic_ack(delivery_tag=method.delivery_tag)
 

@@ -12,15 +12,21 @@ def process_outbox_events() -> None:
 
     try:
 
-        events_for_publish = OutboxRepository.get_events_for_publish(db=db)
+        events_for_publish = OutboxRepository.claim_events_for_publish(db=db)
+        db.commit()
 
         for event in events_for_publish:
             try:
-                publish_event(routing_key=event.routing_key, payload=event.payload)
+                publish_event(
+                    routing_key=event.routing_key,
+                    event_id=event.event_id,
+                    event_type=event.event_type,
+                    payload=event.payload,
+                )
                 OutboxRepository.mark_as_published(event)
 
             except Exception as exc:
-                OutboxRepository.mark_as_failed(
+                OutboxRepository.mark_for_retry(
                     outbox_event=event, error_message=str(exc)
                 )
 

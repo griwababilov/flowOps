@@ -3,11 +3,13 @@ from pydantic import BaseModel
 from app.core.enums import NotificationEventType
 
 
-class BaseEvent(BaseModel):
+class EventEnvelope(BaseModel):
+    event_id: str
     event_type: NotificationEventType
+    payload: dict
 
 
-class PartDefectiveDetectedEvent(BaseEvent):
+class PartDefectiveDetectedPayload(BaseModel):
     part_id: int
     batch_id: int
     defect_reason: str
@@ -15,7 +17,7 @@ class PartDefectiveDetectedEvent(BaseEvent):
     timestamp: str | None = None
 
 
-class BatchCompletedEvent(BaseEvent):
+class BatchCompletedPayload(BaseModel):
     batch_number: str
     defect_rate: float
     timestamp: str | None = None

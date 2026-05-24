@@ -55,7 +55,6 @@ class PartService:
                 db.flush()
 
                 payload = {
-                    "event_type": "part.defective_detected",
                     "part_id": part.id,
                     "batch_id": batch.id,
                     "defect_reason": defect_reason.value if defect_reason else None,
@@ -86,7 +85,6 @@ class PartService:
                 )
 
                 payload = {
-                    "event_type": "batch.completed",
                     "batch_number": batch.batch_number,
                     "defect_rate": defect_rate,
                     "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -231,10 +229,9 @@ class PartService:
                     reason = updated_part.defect_reason
 
                     payload = {
-                        "event_type": "part.defective_detected",
                         "part_id": updated_part.id,
                         "batch_id": batch.id,
-                        "defect_reason": (reason.value if reason else None),
+                        "defect_reason": reason.value if reason else None,
                         "action": "update",
                         "timestamp": datetime.now(timezone.utc).isoformat(),
                     }

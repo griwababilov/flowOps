@@ -4,18 +4,23 @@ from app.services.notification_service import NotificationService
 from app.schemas.notification import NotificationCreate, NotificationResponse
 from app.core.enums import NotificationEventType, NotificationSeverity
 from app.schemas.events import (
-    BaseEvent,
-    PartDefectiveDetectedEvent,
-    BatchCompletedEvent,
+    PartDefectiveDetectedPayload,
+    BatchCompletedPayload,
 )
 
 
-def handle_part_defective_detected(db: Session, payload: dict) -> NotificationResponse:
+def handle_part_defective_detected(
+    db: Session,
+    event_id: str,
+    event_type: str,
+    payload: dict,
+) -> NotificationResponse:
 
-    event = PartDefectiveDetectedEvent.model_validate(payload)
+    event = PartDefectiveDetectedPayload.model_validate(payload)
 
     notification_data = NotificationCreate(
-        event_type=event.event_type,
+        event_id=event_id,
+        event_type=event_type,
         title="Defective part detected",
         message=(
             f"Part {event.part_id} in batch {event.batch_id} "
@@ -24,17 +29,25 @@ def handle_part_defective_detected(db: Session, payload: dict) -> NotificationRe
         severity=NotificationSeverity.WARNING,
         payload=payload,
     )
+
     return NotificationService.create_notification(
-        db=db, notification_data=notification_data
+        db=db,
+        notification_data=notification_data,
     )
 
 
-def handle_batch_completed(db: Session, payload: dict) -> NotificationResponse:
+def handle_batch_completed(
+    db: Session,
+    event_id: str,
+    event_type: str,
+    payload: dict,
+) -> NotificationResponse:
 
-    event = BatchCompletedEvent.model_validate(payload)
+    event = BatchCompletedPayload.model_validate(payload)
 
     notification_data = NotificationCreate(
-        event_type=event.event_type,
+        event_id=event_id,
+        event_type=event_type,
         title="Batch completed",
         message=(
             f"Batch {event.batch_number} completed. "
@@ -43,21 +56,34 @@ def handle_batch_completed(db: Session, payload: dict) -> NotificationResponse:
         severity=NotificationSeverity.INFO,
         payload=payload,
     )
+
     return NotificationService.create_notification(
-        db=db, notification_data=notification_data
+        db=db,
+        notification_data=notification_data,
     )
 
 
-def handle_event(db: Session, payload: dict) -> NotificationResponse:
-
-    event = BaseEvent.model_validate(payload)
-
-    event_type = event.event_type
+def handle_event(
+    db: Session,
+    event_id: str,
+    event_type: str,
+    payload: dict,
+) -> NotificationResponse | None:
 
     if event_type == NotificationEventType.PART_DEFECTIVE_DETECTED:
-        return handle_part_defective_detected(db, payload)
+        return handle_part_defective_detected(
+            db=db,
+            event_id=event_id,
+            event_type=event_type,
+            payload=payload,
+        )
 
     if event_type == NotificationEventType.BATCH_COMPLETED:
-        return handle_batch_completed(db, payload)
+        return handle_batch_completed(
+            db=db,
+            event_id=event_id,
+            event_type=event_type,
+            payload=payload,
+        )
 
     raise ValueError(f"Unsupported event type: {event_type}")

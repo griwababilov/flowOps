@@ -284,10 +284,16 @@ def test_create_defective_part_creates_outbox_event(client, db_session):
     )
 
     assert outbox_event is not None
+    assert outbox_event.event_id is not None
+    assert len(outbox_event.event_id) == 36
+    assert outbox_event.event_type == "part.defective_detected"
     assert outbox_event.routing_key == "part.defective_detected"
     assert outbox_event.status == OutboxEventStatus.PENDING
 
-    assert outbox_event.payload["event_type"] == "part.defective_detected"
+    assert "event_type" not in outbox_event.payload
+    assert "event_id" not in outbox_event.payload
+    assert "payload" not in outbox_event.payload
+
     assert outbox_event.payload["part_id"] == part["id"]
     assert outbox_event.payload["batch_id"] == batch["id"]
     assert outbox_event.payload["defect_reason"] == "LENGTH_EXCEEDS_TOLERANCE"
@@ -343,10 +349,16 @@ def test_patch_accepted_part_to_defective_creates_outbox_event(client, db_sessio
     )
 
     assert outbox_event is not None
+    assert outbox_event.event_id is not None
+    assert len(outbox_event.event_id) == 36
+    assert outbox_event.event_type == "part.defective_detected"
     assert outbox_event.routing_key == "part.defective_detected"
     assert outbox_event.status == OutboxEventStatus.PENDING
 
-    assert outbox_event.payload["event_type"] == "part.defective_detected"
+    assert "event_type" not in outbox_event.payload
+    assert "event_id" not in outbox_event.payload
+    assert "payload" not in outbox_event.payload
+
     assert outbox_event.payload["part_id"] == part["id"]
     assert outbox_event.payload["batch_id"] == batch["id"]
     assert outbox_event.payload["defect_reason"] == "LENGTH_EXCEEDS_TOLERANCE"
@@ -419,10 +431,16 @@ def test_create_last_part_creates_batch_completed_outbox_event(client, db_sessio
     )
 
     assert outbox_event is not None
+    assert outbox_event.event_id is not None
+    assert len(outbox_event.event_id) == 36
+    assert outbox_event.event_type == "batch.completed"
     assert outbox_event.routing_key == "batch.completed"
     assert outbox_event.status == OutboxEventStatus.PENDING
 
-    assert outbox_event.payload["event_type"] == "batch.completed"
+    assert "event_type" not in outbox_event.payload
+    assert "event_id" not in outbox_event.payload
+    assert "payload" not in outbox_event.payload
+
     assert outbox_event.payload["batch_number"] == "Outbox-batch-completed"
     assert outbox_event.payload["defect_rate"] == 0.0
     assert outbox_event.payload["timestamp"] is not None

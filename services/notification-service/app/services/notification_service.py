@@ -14,8 +14,17 @@ class NotificationService:
     def create_notification(
         db: Session, notification_data: NotificationCreate
     ) -> NotificationResponse:
+        existing_notification = NotificationRepository.get_by_event_id(
+            db=db,
+            event_id=notification_data.event_id,
+        )
+
+        if existing_notification:
+            return NotificationResponse.model_validate(existing_notification)
+
         notification = NotificationRepository.create(
-            db=db, **notification_data.model_dump()
+            db=db,
+            **notification_data.model_dump(),
         )
 
         try:
@@ -28,22 +37,24 @@ class NotificationService:
             raise
 
     @staticmethod
+    def get_notifications(db: Session) -> list[NotificationResponse]:
+        notifications = NotificationRepository.get_all(db=db)
+        return list(map(NotificationResponse.model_validate, notifications))
+
+    @staticmethod
     def get_notification(db: Session, notification_id: int) -> NotificationResponse:
         notification = NotificationRepository.get_by_id(
-            db=db, notification_id=notification_id
+            db=db,
+            notification_id=notification_id,
         )
 
         if not notification:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Notification not found",
             )
 
         return NotificationResponse.model_validate(notification)
-
-    @staticmethod
-    def get_notifications(db: Session) -> list[NotificationResponse]:
-        notifications = NotificationRepository.get_all(db=db)
-        return list(map(NotificationResponse.model_validate, notifications))
 
     @staticmethod
     def mark_notification_as_read(

@@ -27,6 +27,11 @@ class Notification(Base):
     event_type: Mapped[NotificationEventType] = mapped_column(
         SqlEnum(NotificationEventType), nullable=False, index=True
     )
+
+    event_id: Mapped[str] = mapped_column(
+        String(36), nullable=False, unique=True, index=True
+    )
+
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
 
